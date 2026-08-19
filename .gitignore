@@ -1,0 +1,6 @@
+# Environment / secret files
+.env
+.env.*
+!.env.template
+afc-buttercup/crs_scratch/oss-fuzz/
+env.dev.compose
