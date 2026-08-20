@@ -114,9 +114,15 @@ class Correlator:
         )
 
         # --- Step 1: Create incident in backend orchestrator -------------
-        incident_id = self._create_incident(event, asset, technique)
+        incident_id, is_new = self._create_incident(event, asset, technique)
         if incident_id is None:
             logger.error("Failed to create incident — skipping")
+            if event_id:
+                _PROCESSED.add(event_id)
+            return
+
+        if not is_new:
+            logger.info("Incident %s already exists for decoy %s — skipping transitions", incident_id, decoy_id)
             if event_id:
                 _PROCESSED.add(event_id)
             return
@@ -146,8 +152,13 @@ class Correlator:
             _PROCESSED.add(event_id)
 
     # -------------------------------------------------------------- #
-    def _create_incident(self, event: dict[str, Any], asset: Any, technique: str) -> str | None:
-        """POST to /internal/events to create a new incident."""
+    def _create_incident(self, event: dict[str, Any], asset: Any, technique: str) -> tuple[str | None, bool]:
+        """POST to /internal/events to create a new incident.
+
+        Returns (incident_id, is_new).  If an active incident already exists
+        for this decoy, the backend returns the existing one with
+        ``action=appended_to_existing``.
+        """
         payload = {
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "decoy_id": event.get("decoy_id", ""),
@@ -162,11 +173,12 @@ class Correlator:
             resp.raise_for_status()
             data = resp.json()
             incident_id = data.get("incident_id")
-            logger.info("Created incident %s via %s", incident_id, url)
-            return incident_id
+            is_new = data.get("status") == "incident_created"
+            logger.info("Created incident %s (new=%s) via %s", incident_id, is_new, url)
+            return incident_id, is_new
         except Exception:
             logger.exception("Failed to create incident via %s", url)
-            return None
+            return None, False
 
     # -------------------------------------------------------------- #
     def _transition(self, incident_id: str, state: str, *, diff: str | None = None, result: str | None = None, detail: str | None = None) -> None:

@@ -112,6 +112,7 @@ class StreamConsumer:
                 for msg_id, fields in messages:
                     try:
                         event = _deserialize(fields)
+                        event["msg_id"] = msg_id
                         handler(event)
                         self.client.xack(self.stream, self.group, msg_id)
                         logger.debug("Acknowledged message %s", msg_id)
