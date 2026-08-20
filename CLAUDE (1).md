@@ -1,4 +1,4 @@
-# AGENT INSTRUCTIONS — TrapNet-CRS Build
+# AGENT INSTRUCTIONS — Chakravyuh Build
 
 You are acting as an experienced cybersecurity engineer and systems integrator building a working
 end-to-end prototype for a defence-focused hackathon (Indian Army Terrier Cyber Quest — AI Kavach
