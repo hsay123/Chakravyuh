@@ -73,6 +73,8 @@ class Correlator:
         self.buttercup = ButtercupClient(base_url=BUTTERCUP_API_URL)
         self._session = __import__("requests").Session()
         self._session.headers.update({"Content-Type": "application/json"})
+        # task_id → incident_id mapping for the poller
+        self._task_incident_map: dict[str, str] = {}
 
     # -------------------------------------------------------------- #
     def handle_event(self, event: dict[str, Any]) -> None:
@@ -147,6 +149,11 @@ class Correlator:
             logger.warning("Buttercup control-file submission returned error (non-critical): %s", result.get("detail"))
         else:
             logger.info("Buttercup control-file accepted: %s", result)
+            # Track task_id → incident_id for the patch poller
+            task_id = result.get("task_id")
+            if task_id:
+                self._task_incident_map[task_id] = incident_id
+                logger.info("Mapped Buttercup task %s → incident %s", task_id, incident_id)
 
         if event_id:
             _PROCESSED.add(event_id)
@@ -205,6 +212,101 @@ class Correlator:
 # Main
 # ---------------------------------------------------------------------------
 
+def patch_poller(correlator: Correlator) -> None:
+    """Background thread: poll Buttercup's patches_queue and transition incidents."""
+    import redis as redislib
+
+    crs_redis_host = os.getenv("CRS_REDIS_HOST", "redis")
+    crs_redis_port = int(os.getenv("CRS_REDIS_PORT", "6379"))
+
+    # Retry connection until CRS Redis is ready
+    r = None
+    for attempt in range(30):
+        try:
+            r = redislib.Redis(host=crs_redis_host, port=crs_redis_port, decode_responses=False)
+            r.ping()
+            break
+        except Exception:
+            logger.info("Patch poller: waiting for CRS Redis (%s:%s) attempt %d/30", crs_redis_host, crs_redis_port, attempt + 1)
+            time.sleep(3)
+
+    if r is None:
+        logger.error("Patch poller: could not connect to CRS Redis after 30 attempts — giving up")
+        return
+
+    logger.info("Patch poller connected to CRS Redis %s:%s", crs_redis_host, crs_redis_port)
+
+    group = "correlation-engine-patches"
+    stream = "patches_queue"
+    consumer = "patch-watcher"
+
+    # Create consumer group (idempotent)
+    try:
+        r.xgroup_create(stream, group, id="0", mkstream=True)
+    except redislib.exceptions.ResponseError:
+        pass  # already exists
+
+    while True:
+        try:
+            items = r.xreadgroup(
+                groupname=group,
+                consumername=consumer,
+                streams={stream: ">"},
+                count=5,
+                block=5000,
+            )
+            if not items:
+                continue
+
+            for _stream_name, entries in items:
+                for item_id, fields in entries:
+                    raw = fields.get(b"item") or fields.get("item")
+                    if not raw:
+                        r.xack(stream, group, item_id)
+                        continue
+
+                    # Parse the Patch protobuf-like JSON
+                    import json
+                    try:
+                        patch_data = json.loads(raw) if isinstance(raw, (str, bytes)) else {}
+                    except (json.JSONDecodeError, UnicodeDecodeError):
+                        # Binary protobuf — try to extract task_id from raw bytes
+                        patch_data = {}
+
+                    task_id = patch_data.get("task_id", "")
+                    patch_text = patch_data.get("patch", "")
+                    internal_patch_id = patch_data.get("internal_patch_id", "")
+
+                    logger.info("Patch received: task_id=%s internal_patch_id=%s", task_id, internal_patch_id)
+
+                    incident_id = correlator._task_incident_map.get(task_id)
+                    if incident_id is None:
+                        logger.debug("No incident mapped for task %s — skipping", task_id)
+                        r.xack(stream, group, item_id)
+                        continue
+
+                    # Transition: FUZZING → PATCH_GENERATED → VERIFYING → AWAITING_APPROVAL
+                    correlator._transition(
+                        incident_id, "PATCH_GENERATED",
+                        diff=patch_text[:10000],
+                        detail=f"Buttercup patch {internal_patch_id} for task {task_id}",
+                    )
+                    correlator._transition(
+                        incident_id, "VERIFYING",
+                        detail="Running patch verification",
+                    )
+                    correlator._transition(
+                        incident_id, "AWAITING_APPROVAL",
+                        detail="Patch verified — awaiting human approval",
+                    )
+                    logger.info("Incident %s advanced to AWAITING_APPROVAL", incident_id)
+                    r.xack(stream, group, item_id)
+
+        except Exception:
+            logger.exception("Patch poller error")
+            time.sleep(5)
+
+
 def main() -> None:
     correlator = Correlator()
 
@@ -224,6 +326,11 @@ def main() -> None:
     thread = threading.Thread(target=server.run, daemon=True)
     thread.start()
     logger.info("Health-check server listening on :8100")
+
+    # Start the Buttercup patch poller in a daemon thread
+    poller_thread = threading.Thread(target=patch_poller, args=(correlator,), daemon=True)
+    poller_thread.start()
+    logger.info("Buttercup patch poller started")
 
     consumer.consume(handler=correlator.handle_event)
 

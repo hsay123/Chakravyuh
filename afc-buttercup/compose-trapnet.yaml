@@ -38,7 +38,7 @@ x-env: &common-env
   BUTTERCUP_PATCHER_SERVE__REDIS_URL: redis://redis:6379
   BUTTERCUP_PATCHER_SERVE__SLEEP_TIME: 5
   BUTTERCUP_PATCHER_LOG_LEVEL: debug
-  BUTTERCUP_PATCHER_TASK_STORAGE_DIR: /node_data/crs_scratch
+  BUTTERCUP_PATCHER_TASK_STORAGE_DIR: /node_data/tasks_storage
   BUTTERCUP_PATCHER_SCRATCH_DIR: /node_data/crs_scratch
   BUTTERCUP_PROGRAM_MODEL_SERVE__REDIS_URL: redis://redis:6379
   BUTTERCUP_PROGRAM_MODEL_SERVE__SLEEP_TIME: 5
@@ -76,7 +76,7 @@ services:
     image: redis:7.4.2
     restart: always
     ports:
-      - "127.0.0.1:6379:6379"
+      - "6379:6379"
     healthcheck:
       test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
       interval: 1s

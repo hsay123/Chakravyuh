@@ -55,6 +55,8 @@ services:
       ASSETS_CONFIG: /app/config/assets.yaml
       BACKEND_URL: http://backend-orchestrator:8000
       BUTTERCUP_API_URL: http://host.docker.internal:31323
+      CRS_REDIS_HOST: host.docker.internal
+      CRS_REDIS_PORT: "6379"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped

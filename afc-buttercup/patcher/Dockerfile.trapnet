@@ -49,6 +49,7 @@ FROM runtime-base AS runtime
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     apt-get install -y codequery rsync git cscope && \
     rm -rf /var/lib/apt/lists/*
+RUN curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-24.0.9.tgz | tar xz --strip-components=1 -C /usr/local/bin docker/docker
 
 COPY --from=builder --chown=app:app /app/patcher/.venv /app/patcher/.venv
 COPY common/container-entrypoint.sh /container-entrypoint.sh
