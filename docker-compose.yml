@@ -1,4 +1,4 @@
-# TrapNet-CRS Integration Compose
+# Chakravyuh Integration Compose
 # Brings up: DataTrap honeypots, event adapter, correlation engine,
 # backend orchestrator, dashboard, and shared Redis
 # 
