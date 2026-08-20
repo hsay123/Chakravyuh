@@ -3,10 +3,18 @@
 ## 1. Pipeline State Machine
 
 ```
-DETECTED → MATCHED → FUZZING → PATCH_GENERATED → VERIFYING → AWAITING_APPROVAL → APPROVED → DEPLOYED
-                                                                       │
-                                                                       └──▶ REJECTED
+DETECTED → TWIN_SPAWNED → REPLAYING ──▶ TWIN_SURVIVED → CLOSED (common case, ends here)
+                                    │
+                                    └──▶ TWIN_COMPROMISED → SEEDED_FUZZING → PATCH_GENERATED
+                                            → RE_VERIFYING_ON_FRESH_TWIN → AWAITING_APPROVAL
+                                            → APPROVED → RE_PROOF_ON_PATCHED_TWIN → DEPLOYED
+                                                                    │
+                                                                    └──▶ REJECTED
 ```
+
+Note the branch: most incidents should resolve at `TWIN_SURVIVED` within seconds — that's expected
+and healthy, not a failure. Only a genuine `TWIN_COMPROMISED` result proceeds down the full patch
+pipeline. This branch itself is worth showing judges: it demonstrates the system doesn't cry wolf.
 
 Each incident is an object:
 ```json
@@ -14,16 +22,20 @@ Each incident is an object:
   "incident_id": "uuid",
   "decoy_id": "fake-plc-01",
   "real_asset_id": "plc-controller-svc",
-  "technique": "buffer_overflow_probe",
+  "attacker_source_ip": "203.0.113.4",
+  "raw_payload": "...",
   "state": "AWAITING_APPROVAL",
   "timeline": [
     {"state": "DETECTED", "ts": "..."},
-    {"state": "MATCHED", "ts": "..."},
-    {"state": "FUZZING", "ts": "..."},
+    {"state": "TWIN_SPAWNED", "ts": "...", "twin_id": "..."},
+    {"state": "REPLAYING", "ts": "..."},
+    {"state": "TWIN_COMPROMISED", "ts": "...", "evidence": "crash log / stack trace"},
+    {"state": "SEEDED_FUZZING", "ts": "..."},
     {"state": "PATCH_GENERATED", "ts": "...", "diff": "..."},
-    {"state": "VERIFYING", "ts": "...", "result": "pass"}
+    {"state": "RE_VERIFYING_ON_FRESH_TWIN", "ts": "...", "result": "pass"}
   ],
   "patch_diff": "...",
+  "incident_report_url": "...",
   "approver": null
 }
 ```
@@ -33,12 +45,15 @@ Each incident is an object:
 - `GET /incidents` — list all incidents, current state.
 - `GET /incidents/{id}` — full detail incl. timeline and diff.
 - `WS /stream` — push new events/state changes to dashboard live.
-- `POST /incidents/{id}/approve` — body: `{ "approver": "name/id" }` → triggers shadow-apply + reverify.
+- `POST /incidents/{id}/approve` — body: `{ "approver": "name/id" }` → triggers patch apply +
+  fresh-twin re-proof.
 - `POST /incidents/{id}/reject` — body: `{ "approver": "name/id", "reason": "..." }`.
+- `GET /incidents/{id}/report` — the full incident report (attacker source, payload, twin crash
+  evidence, patch diff, re-proof result) in exportable form for the responsible defence officer.
 - `GET /audit-log` — flat list of all approve/reject actions with timestamps.
 
 Internal (not exposed to frontend directly):
-- Correlation Engine → Backend: `POST /internal/events` (raw decoy events).
+- Sandbox Twin Manager → Backend: `POST /internal/events` (raw decoy events + twin outcomes).
 - Buttercup adapter → Backend: `POST /internal/crs-status` (state transitions from Buttercup).
 
 ## 3. Dashboard Layout (wireframe description)

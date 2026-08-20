@@ -10,6 +10,13 @@
 # 5. Sends a control file to trigger the task
 set -euo pipefail
 
+# Load environment variables
+if [ -f .env ]; then
+    set -a
+    source .env
+    set +a
+fi
+
 MOCK_API="http://127.0.0.1:31323"
 TASK_SERVER="http://127.0.0.1:8000"
 CRS_KEY_ID="515cc8a0-3019-4c9f-8c1c-72d0b54ae561"
@@ -77,7 +84,7 @@ echo "Creating repo tarball..."
 cd "${SCRATCH_DIR}/example-libpng"
 REPO_HASH=$(sha256sum .git/HEAD 2>/dev/null | cut -d' ' -f1 || echo "$(date +%s)")
 cd "${SCRATCH_DIR}"
-tar czf "/tmp/repo-${REPO_HASH}.tar.gz" -C example-libpng .
+tar czf "/tmp/repo-${REPO_HASH}.tar.gz" example-libpng/
 
 echo "Creating fuzz tooling tarball..."
 cd "${SCRATCH_DIR}/oss-fuzz-aixcc"
@@ -120,7 +127,7 @@ cat > /tmp/control_file.json << EOF
     "round_id": "trapnet-demo",
     "created_at": "$(python3 -c "from datetime import datetime, timezone; print(datetime.now(timezone.utc).isoformat())")",
     "updated_at": "$(python3 -c "from datetime import datetime, timezone; print(datetime.now(timezone.utc).isoformat())")",
-    "focus": "src/",
+    "focus": "example-libpng",
     "project_name": "${PROJECT_NAME}",
     "commit": "${HEAD_REF}",
     "harnesses_included": true

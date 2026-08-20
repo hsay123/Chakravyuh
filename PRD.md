@@ -22,9 +22,15 @@ before the attacker ever reaches it.
 
 ## 2. Goal / One-liner
 
-> When an attacker touches a fake asset, we learn *how* they attacked it, check if the *real* asset
-> has the same flaw, and if so — autonomously fuzz it, generate a patch, prove the patch works, and
-> hand it to a human for one-click approval. All of this is visible live on a single dashboard.
+> When an attacker touches a fake asset, we capture their exact payload and replay it — not a guess,
+> the literal bytes — against a disposable sandboxed twin of the real asset. If the twin breaks, that
+> is proof (not inference) that the real asset is exploitable. We then seed our fuzzer with that
+> proven-bad input, generate a patch, verify it on the twin, and hand a human a full proof-of-exploit
+> + proof-of-fix report for one-click approval — all before the attacker ever reaches the real thing.
+
+This is the core differentiator: most deception systems *classify* an attacker's technique and guess
+at a matching weakness. We *prove* exploitability first, deterministically, on a disposable copy —
+then fix the real asset with certainty, not inference.
 
 ## 3. Non-Goals (explicitly out of scope for the hackathon build)
 
@@ -55,30 +61,50 @@ before the attacker ever reaches it.
 - FR-3: Decoy responses must adapt across a session (not static/scripted) — this is the whole point of
   choosing Q-Cowrie/DataTrap over plain Cowrie.
 
-### 5.2 Correlation Engine (the custom glue — this is your team's real contribution)
-- FR-4: On each attacker event, classify the technique/vulnerability class being probed (e.g.,
-  "buffer overflow attempt on service parser", "default credential brute force").
-- FR-5: Match the classified technique against a small registry mapping decoy asset → real asset →
-  known codebase/binary, to decide whether the real asset needs to be checked.
-- FR-6: On a match, trigger a Buttercup task against the corresponding real target's source repo.
+### 5.2 Sandbox Twin Manager (the custom glue — this is your team's real contribution)
+- FR-4: On each attacker event, extract the exact raw payload/input the attacker sent to the decoy —
+  not a classification of it, the literal bytes/command/request.
+- FR-5: Look up the decoy's registry entry to find its paired real-asset's software stack, then spin
+  up a **fresh, disposable, network-isolated sandbox twin** running that same stack (same binary/
+  codebase version as the real asset, not the real asset itself, and never network-reachable from the
+  decoy, the internet, or the real asset).
+- FR-6: Replay the captured payload against the twin exactly as the attacker sent it.
+- FR-7: Observe the outcome:
+  - **Twin survives** — log as a non-issue/low-severity note, tear down the twin, no further action.
+  - **Twin crashes/is compromised** — this is deterministic proof the real asset shares the flaw.
+    Proceed to FR-8.
+- FR-8: On proof of exploitability, hand the crashing payload to afc-buttercup as a **seed input**
+  (not a cold-start fuzzing campaign) so it reproduces the crash immediately and begins root-causing
+  and patching from a known-bad starting point.
+- FR-9: Tear down every sandbox twin after use — twins are single-incident, disposable, never reused
+  or left running.
 
 ### 5.3 CRS / Patch Layer (afc-buttercup)
-- FR-7: Buttercup must run the full find → fuzz → patch → regression-verify loop against a real
-  target codebase (start with a known-vulnerable sample, e.g. example-libpng, then swap to your
-  chosen embedded-style demo target).
-- FR-8: A generated patch must not be applied automatically — it is staged and requires explicit
+- FR-10: Buttercup runs seeded fuzzing (using the proven-crashing payload from the twin as its
+  starting corpus) → root-cause → patch generation → regression-verify, against the target codebase.
+- FR-11: A generated patch must not be applied automatically — it is staged and requires explicit
   operator approval in the dashboard.
-- FR-9: On approval, the patch is applied to a shadow copy of the real target and the regression/fuzz
-  suite re-runs to prove the fix holds, before being marked "deployed" in the demo.
+- FR-12: On approval, the patch is applied to the real target's codebase (a fresh sandbox twin is
+  spun up one more time to re-verify the patched build survives the exact same payload, before the
+  patch is marked "deployed" in the demo) — never patch the "live" asset directly without this final
+  re-proof step.
+- FR-13: Generate a structured incident report: attacker source, exact payload, decoy touched,
+  real asset affected, proof-of-exploit (twin crash evidence), patch diff, proof-of-fix (twin re-test
+  pass), and a timestamp trail — routed to the named defence responsible-officer for that asset.
 
 ### 5.4 Dashboard (the thing judges actually watch)
-- FR-10: Live network map — real assets vs decoy assets, decoys highlight red on interaction.
-- FR-11: Live attacker event feed (from Q-Cowrie/DataTrap logs).
-- FR-12: Pipeline status panel showing state machine: `Detected → Matched → Fuzzing → Patch Generated
-  → Verifying → Awaiting Approval → Approved/Deployed`.
-- FR-13: Code diff view — vulnerable line(s) vs AI-generated patch, side by side.
-- FR-14: One approve/reject button, operator-facing, with an audit trail (who approved, when).
-- FR-15: Optional raw terminal panel showing live Q-Cowrie session output for demo authenticity.
+- FR-14: Live network map — real assets vs decoy assets vs ephemeral sandbox twins, decoys highlight
+  red on interaction, twins appear/disappear live as they spin up and tear down.
+- FR-15: Live attacker event feed (from Q-Cowrie/DataTrap logs), including the raw captured payload.
+- FR-16: Pipeline status panel showing state machine: `Detected → Twin Spawned → Replaying →
+  Twin Compromised → Seeded Fuzzing → Patch Generated → Re-Verifying on Fresh Twin →
+  Awaiting Approval → Approved/Deployed` (or `Twin Survived → Closed`, a short branch, if the replay
+  didn't reproduce the issue).
+- FR-17: Code diff view — vulnerable line(s) vs AI-generated patch, side by side.
+- FR-18: Full incident report view (per FR-13) — this is the artifact routed to the responsible
+  defence officer, and should be exportable (PDF/print) not just on-screen.
+- FR-19: One approve/reject button, operator-facing, with an audit trail (who approved, when).
+- FR-20: Optional raw terminal panel showing live Q-Cowrie session output for demo authenticity.
 
 ## 6. Non-Functional Requirements
 

@@ -4,3 +4,14 @@
 !.env.template
 afc-buttercup/crs_scratch/oss-fuzz/
 env.dev.compose
+
+# TrapNet / AFC runtime artifacts
+afc-buttercup/node_data_storage/
+afc-buttercup/crs_scratch/
+afc-buttercup/tasks_storage/
+afc-buttercup/fuzzer_result.txt
+afc-buttercup/watch_fuzzer.log
+afc-buttercup/watch_fuzzer.sh
+
+# Generated tarballs
+*.tgz

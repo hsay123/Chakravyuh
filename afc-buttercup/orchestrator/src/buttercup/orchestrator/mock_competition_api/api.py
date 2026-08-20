@@ -117,6 +117,7 @@ class MockCompetitionAPI:
 
         self.tarball_path = tarball_path
         self.file_map: Dict[str, str] = {}
+        self.tarball_map: Dict[str, str] = {}  # sha256 -> tarball file path
         self.crs_config = crs_config or CRSConfig()
 
         # Log CRS configuration status at startup
@@ -294,31 +295,36 @@ class MockCompetitionAPI:
                 # Ensure temp directory exists
                 os.makedirs(self.temp_dir, exist_ok=True)
 
-                # Create a temporary file to store the uploaded tarball
-                temp_tarball = os.path.join(self.temp_dir, "uploaded_tarball.tar.gz")
-                logger.info(f"Saving uploaded tarball to {temp_tarball}")
+                # Read the uploaded content
+                content = await file.read()
+                
+                # Compute SHA256 of the tarball
+                import hashlib
+                tarball_sha256 = hashlib.sha256(content).hexdigest()
+                
+                # Store the tarball with its sha256 as key
+                stored_path = os.path.join(self.temp_dir, f"{tarball_sha256}.tar.gz")
+                with open(stored_path, "wb") as buffer:
+                    buffer.write(content)
+                
+                self.tarball_map[tarball_sha256] = stored_path
+                logger.info(f"Stored tarball with hash {tarball_sha256} at {stored_path} ({len(content)} bytes)")
 
-                # Write the uploaded file to the temporary location
+                # Also extract individual files for backward compatibility
+                temp_tarball = os.path.join(self.temp_dir, "uploaded_tarball.tar.gz")
                 with open(temp_tarball, "wb") as buffer:
-                    content = await file.read()
                     buffer.write(content)
 
-                # Verify the file was saved correctly
-                if not os.path.exists(temp_tarball):
-                    logger.error(f"Failed to save tarball to {temp_tarball}")
-                    raise HTTPException(status_code=500, detail="Failed to save uploaded file")
-
-                logger.info(f"Tarball saved successfully ({os.path.getsize(temp_tarball)} bytes)")
-
-                # Extract the tarball
                 if self.extract_tarball(temp_tarball):
                     return {
-                        "message": f"Tarball uploaded and processed successfully. Mapped {len(self.file_map)} files."
+                        "message": f"Tarball uploaded and processed successfully. Mapped {len(self.file_map)} files. Tarball hash: {tarball_sha256}"
                     }
                 else:
-                    raise HTTPException(status_code=400, detail="Failed to process the uploaded tarball")
+                    return {
+                        "message": f"Tarball stored with hash {tarball_sha256} ({len(content)} bytes). Extraction failed but tarball is servable."
+                    }
             except Exception as e:
-                logger.error(f"Error processing uploaded tarball: {e}", exc_info=True)
+                logger.error(f"Error processing tarball upload: {e}", exc_info=True)
                 raise HTTPException(status_code=400, detail=f"Error processing file: {str(e)}")
 
         # Upload and process control file
@@ -416,13 +422,21 @@ class MockCompetitionAPI:
 
             return SarifAssessmentResponse(status=SubmissionStatus.ACCEPTED)
 
-        # File download endpoint
+        # File download endpoint - serves tarballs by SHA256 hash, or individual files by basename
         @self.app.get("/v1/file/{file_hash}")
         async def get_file(file_hash: str):
-            if file_hash not in self.file_map:
-                raise HTTPException(status_code=404, detail="File not found")
+            # First check tarball_map (sha256 -> tarball path)
+            if file_hash in self.tarball_map:
+                tarball_path = self.tarball_map[file_hash]
+                if os.path.exists(tarball_path):
+                    logger.info(f"Serving tarball {file_hash} from {tarball_path}")
+                    return FileResponse(tarball_path, media_type="application/gzip")
+            
+            # Fall back to file_map (basename -> extracted file path)
+            if file_hash in self.file_map:
+                return FileResponse(self.file_map[file_hash])
 
-            return FileResponse(self.file_map[file_hash])
+            raise HTTPException(status_code=404, detail="File not found")
 
         # Get status of file upload
         @self.app.get("/files-status/")

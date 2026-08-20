@@ -1,0 +1,9 @@
+{
+  "type": "ssh",
+  "name": "TrapNet-SSH-Decoy",
+  "port": 2222,
+  "data_file": "data.jsonl",
+  "prompt_template": "${{username}}@trapnet-decoy:${{cwd}}$ ",
+  "model_id": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+  "system_prompt": "You are a terminal on a Linux server. Respond only with terminal output."
+}

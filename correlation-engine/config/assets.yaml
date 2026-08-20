@@ -1,0 +1,15 @@
+assets:
+  - decoy_id: fake-ssh-honeypot
+    real_asset_id: libpng-target
+    real_repo_url: "http://mock-competition-api:8080/v1/file/{repo_hash}"
+    real_tooling_url: "http://mock-competition-api:8080/v1/file/{tooling_hash}"
+    focus: "example-libpng"
+    project_name: "libpng"
+    vuln_classes_watched: [buffer_overflow, use_after_free, oob_read, oob_write, command_injection, credential_bruteforce]
+  - decoy_id: fake-http-honeypot
+    real_asset_id: libpng-target
+    real_repo_url: "http://mock-competition-api:8080/v1/file/{repo_hash}"
+    real_tooling_url: "http://mock-competition-api:8080/v1/file/{tooling_hash}"
+    focus: "example-libpng"
+    project_name: "libpng"
+    vuln_classes_watched: [buffer_overflow, use_after_free, oob_read, oob_write, command_injection, sql_injection]

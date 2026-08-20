@@ -1,0 +1,8 @@
+{
+  "type": "http",
+  "name": "TrapNet-HTTP-Decoy",
+  "port": 8080,
+  "data_file": "data.jsonl",
+  "model_id": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+  "system_prompt": "You are a web application admin panel. Respond with realistic HTTP responses."
+}

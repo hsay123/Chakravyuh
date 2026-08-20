@@ -1,0 +1,92 @@
+# TrapNet-CRS Integration Compose
+# Brings up: DataTrap honeypots, event adapter, correlation engine,
+# backend orchestrator, dashboard, and shared Redis
+# 
+# Note: afc-buttercup (CRS layer) runs separately via compose-trapnet.yaml
+
+services:
+  # ── Shared Infrastructure ──
+  redis:
+    image: redis:7-alpine
+    ports: ["6380:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 3
+    volumes:
+      - redis_data:/data
+
+  # ── Deception Layer ──
+  datatrap:
+    image: ghcr.io/thalesgroup/dd-honeypot:latest
+    ports:
+      - "2223:2222"   # SSH honeypot
+      - "8081:8080"   # HTTP honeypot
+    volumes:
+      - ./honeypots/datatrap-config:/data/honeypot
+      - event_logs:/var/log/honeypot
+    entrypoint: ["sh", "-c"]
+    command: ["python -u honeypot_main.py /data/honeypot 2>&1 | tee /var/log/honeypot/honeypot.json"]
+    restart: unless-stopped
+
+  event-adapter:
+    build:
+      context: ./honeypots
+      dockerfile: Dockerfile
+    depends_on:
+      redis: { condition: service_healthy }
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      DATATRAP_LOG_PATH: /var/log/honeypot
+    volumes:
+      - event_logs:/var/log/honeypot
+    restart: unless-stopped
+
+  # ── Correlation Engine ──
+  correlation-engine:
+    build:
+      context: ./correlation-engine
+      dockerfile: Dockerfile
+    depends_on:
+      redis: { condition: service_healthy }
+    environment:
+      REDIS_URL: redis://redis:6379
+      ASSETS_CONFIG: /app/config/assets.yaml
+      BACKEND_URL: http://backend-orchestrator:8000
+      BUTTERCUP_API_URL: http://host.docker.internal:31323
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  # ── Backend Orchestrator ──
+  backend-orchestrator:
+    build:
+      context: ./backend-orchestrator
+      dockerfile: Dockerfile
+    ports: ["8001:8000"]
+    environment:
+      DATABASE_PATH: /app/data/incidents.db
+      AUDIT_LOG_PATH: /app/data/audit.jsonl
+    volumes:
+      - orchestrator_data:/app/data
+    restart: unless-stopped
+
+  # ── Dashboard ──
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    ports: ["3001:80"]
+    depends_on:
+      - backend-orchestrator
+    restart: unless-stopped
+
+networks:
+  default:
+    name: trapnet-net
+
+volumes:
+  redis_data:
+  event_logs:
+  orchestrator_data:

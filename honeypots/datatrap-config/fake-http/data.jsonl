@@ -1,0 +1,10 @@
+{"path": "/", "args": {}, "response": "<html><head><title>Admin Panel</title></head><body><h1>Welcome to Admin Panel</h1><a href='/login'>Login</a></body></html>"}
+{"path": "/admin", "args": {}, "response": "<html><head><title>Admin Dashboard</title></head><body><h1>Admin Dashboard</h1><p>System Status: Online</p></body></html>"}
+{"path": "/admin/login", "args": {"username": "admin", "password": "wrongpassword"}, "response": "<html><head><title>Login Failed</title></head><body><h1>Invalid credentials</h1><p>Please try again.</p></body></html>"}
+{"path": "/admin/dashboard", "args": {}, "response": "<html><head><title>Dashboard</title></head><body><h1>System Dashboard</h1><p>Users: 42</p><p>Services: 7</p></body></html>"}
+{"path": "/api/users", "args": {"id": "1 OR 1=1 --"}, "response": "[{\"id\":1,\"name\":\"admin\",\"role\":\"administrator\"},{\"id\":2,\"name\":\"operator\",\"role\":\"user\"}]"}
+{"path": "/phpmyadmin", "args": {}, "response": "<html><head><title>phpMyAdmin</title></head><body><h1>phpMyAdmin Login</h1></body></html>"}
+{"path": "/phpmyadmin/index.php", "args": {"pma_username": "root", "pma_password": ""}, "response": "<html><head><title>phpMyAdmin</title></head><body><h1>Welcome to phpMyAdmin</h1><p>Server: MySQL 5.7.33</p></body></html>"}
+{"path": "/.env", "args": {}, "response": "HTTP/1.1 403 Forbidden\r\n\r\n<html><body><h1>403 Forbidden</h1></body></html>"}
+{"path": "/robots.txt", "args": {}, "response": "User-agent: *\nDisallow: /admin/\nDisallow: /api/\nDisallow: /backup/"}
+{"path": "/backup.sql", "args": {}, "response": "HTTP/1.1 404 Not Found\r\n\r\n<html><body><h1>404 Not Found</h1></body></html>"}

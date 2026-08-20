@@ -141,7 +141,7 @@ services:
               "--crs-enabled",
               "--base-url", "http://mock-competition-api:8080"]
     ports:
-      - "127.0.0.1:31323:8080"
+      - "0.0.0.0:31323:8080"
     env_file: env.dev.compose
     volumes:
       - ./crs_scratch:/crs_scratch
