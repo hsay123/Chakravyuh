@@ -1,4 +1,4 @@
-# TrapNet DataTrap Honeypot Integration
+#chakravyuh DataTrap Honeypot Integration
 
 Adapts [DataTrap](https://github.com/ThalesGroup/dd-honeypot) honeypot logs into the
 standard TrapNet event schema and publishes them to Redis stream
