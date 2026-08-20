@@ -265,21 +265,83 @@ def patch_poller(correlator: Correlator) -> None:
                         r.xack(stream, group, item_id)
                         continue
 
-                    # Parse the Patch protobuf-like JSON
+                    # Parse as protobuf (Patch: fields 1,2,3 are strings)
                     import json
-                    try:
-                        patch_data = json.loads(raw) if isinstance(raw, (str, bytes)) else {}
-                    except (json.JSONDecodeError, UnicodeDecodeError):
-                        # Binary protobuf — try to extract task_id from raw bytes
-                        patch_data = {}
+                    task_id = ""
+                    patch_text = ""
+                    internal_patch_id = ""
 
-                    task_id = patch_data.get("task_id", "")
-                    patch_text = patch_data.get("patch", "")
-                    internal_patch_id = patch_data.get("internal_patch_id", "")
+                    def _parse_protobuf_strings(data: bytes) -> dict[int, str]:
+                        """Minimal protobuf wire-format parser for length-delimited string fields."""
+                        result = {}
+                        pos = 0
+                        while pos < len(data):
+                            # Read varint (field tag)
+                            tag = 0
+                            shift = 0
+                            while pos < len(data):
+                                b = data[pos]; pos += 1
+                                tag |= (b & 0x7F) << shift
+                                shift += 7
+                                if not (b & 0x80):
+                                    break
+                            field_number = tag >> 3
+                            wire_type = tag & 0x07
+                            if wire_type == 2:  # length-delimited
+                                length = 0
+                                shift = 0
+                                while pos < len(data):
+                                    b = data[pos]; pos += 1
+                                    length |= (b & 0x7F) << shift
+                                    shift += 7
+                                    if not (b & 0x80):
+                                        break
+                                result[field_number] = data[pos:pos+length].decode("utf-8", errors="replace")
+                                pos += length
+                            elif wire_type == 0:  # varint
+                                while pos < len(data):
+                                    b = data[pos]; pos += 1
+                                    if not (b & 0x80):
+                                        break
+                            else:
+                                break
+                        return result
+
+                    if isinstance(raw, (bytes, bytearray)) and len(raw) > 0:
+                        try:
+                            fields = _parse_protobuf_strings(raw)
+                            task_id = fields.get(1, "")
+                            internal_patch_id = fields.get(2, "")
+                            patch_text = fields.get(3, "")
+                        except Exception:
+                            pass
+
+                    if not task_id:
+                        try:
+                            patch_data = json.loads(raw) if isinstance(raw, (str, bytes)) else {}
+                            task_id = patch_data.get("task_id", "")
+                            patch_text = patch_data.get("patch", "")
+                            internal_patch_id = patch_data.get("internal_patch_id", "")
+                        except Exception:
+                            pass
 
                     logger.info("Patch received: task_id=%s internal_patch_id=%s", task_id, internal_patch_id)
 
                     incident_id = correlator._task_incident_map.get(task_id)
+                    if incident_id is None:
+                        # Fallback: after restart, the in-memory map is empty.
+                        # Query the backend for a FUZZING incident to reconnect.
+                        logger.info("No in-memory map for task %s — querying backend for FUZZING incidents", task_id)
+                        try:
+                            resp = correlator._session.get(f"{ORCHESTRATOR_URL}/incidents", timeout=5)
+                            for inc in resp.json():
+                                if inc.get("state") == "FUZZING":
+                                    incident_id = inc["incident_id"]
+                                    correlator._task_incident_map[task_id] = incident_id
+                                    logger.info("Recovered mapping task %s → incident %s", task_id, incident_id)
+                                    break
+                        except Exception:
+                            logger.exception("Failed to query backend for incident recovery")
                     if incident_id is None:
                         logger.debug("No incident mapped for task %s — skipping", task_id)
                         r.xack(stream, group, item_id)
