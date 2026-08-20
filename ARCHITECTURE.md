@@ -1,4 +1,4 @@
-# ARCHITECTURE — TrapNet-CRS
+# ARCHITECTURE — Chakravyuh
 
 ## 1. High-Level Diagram (textual)
 
