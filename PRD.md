@@ -1,4 +1,4 @@
-# PRD — TrapNet-CRS
+# PRD — Chakravyuh
 ### Deception-Triggered Autonomous Vulnerability Patching System
 **Event:** Indian Army Terrier Cyber Quest 2026 — AI Kavach Track
 **Status:** Draft v1
