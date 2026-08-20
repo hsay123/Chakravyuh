@@ -19,7 +19,7 @@ teams:
       # url: http://host.docker.internal:1324 # This should stay the same, so the scantron docker container can communicate with the outside world
       url: http://task-server:8000
       api_key_id: 515cc8a0-3019-4c9f-8c1c-72d0b54ae561
-      api_key_token: REDACTED_CRS_TOKEN
+      api_key_token: ${CRS_KEY_TOKEN:-placeholder-set-in-env}
       taskme: true
 
 logging:

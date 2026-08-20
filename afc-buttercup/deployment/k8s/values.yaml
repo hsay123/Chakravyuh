@@ -50,7 +50,7 @@ global:
     secretKey: "sk-lf-..."  # Replace with your actual secret key
   crs:
     api_key_id: 515cc8a0-3019-4c9f-8c1c-72d0b54ae561
-    api_key_token: REDACTED_CRS_TOKEN
+    api_key_token: ${CRS_KEY_TOKEN}
     api_key_token_hash: "$argon2id$v=19$m=65536,t=3,p=4$Dg1v6NPGTyXPoOPF4ozD5A$wa/85ttk17bBsIASSwdR/uGz5UKN/bZuu4wu+JIy1iA"
     # api_url: "https://api.tail7e9b4c.ts.net"
     hostname: "buttercup-crs"
@@ -143,7 +143,7 @@ task-server:
   enabled: true
   # API authentication is configured with the following credentials:
   # API Key ID: 515cc8a0-3019-4c9f-8c1c-72d0b54ae561
-  # API Token: REDACTED_CRS_TOKEN (for client usage)
+  # API Token: set via CRS_KEY_TOKEN env var
   # These values are set in the secret/config-map in config.yaml
 
 task-downloader:

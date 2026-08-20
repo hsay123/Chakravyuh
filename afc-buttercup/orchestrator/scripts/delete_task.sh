@@ -9,7 +9,7 @@ set -e
 
 # Get authentication credentials from environment or use default values
 API_KEY_ID="${CRS_API_KEY_ID:-515cc8a0-3019-4c9f-8c1c-72d0b54ae561}"
-API_KEY_TOKEN="${CRS_API_KEY_TOKEN:-REDACTED_CRS_TOKEN}"
+API_KEY_TOKEN="${CRS_API_KEY_TOKEN:-placeholder-set-in-env}"
 
 # Function to make a DELETE request to the API
 make_delete_request() {

@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.template
+!.env.example
 afc-buttercup/crs_scratch/oss-fuzz/
 env.dev.compose
 
@@ -15,3 +16,4 @@ afc-buttercup/watch_fuzzer.sh
 
 # Generated tarballs
 *.tgz
+.git-secret-replacements

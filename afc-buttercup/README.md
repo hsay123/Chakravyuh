@@ -41,7 +41,7 @@ TAILSCALE_ENABLED=false
 COMPETITION_API_KEY_ID: `11111111-1111-1111-1111-111111111111`
 COMPETITION_API_KEY_TOKEN: `secret`
 CRS_KEY_ID="515cc8a0-3019-4c9f-8c1c-72d0b54ae561"
-CRS_KEY_TOKEN="REDACTED_CRS_TOKEN"
+CRS_KEY_TOKEN="set-via-env"
 CRS_API_HOSTNAME="<generated with: openssl rand -hex 16>"
 BUTTERCUP_K8S_VALUES_TEMPLATE="k8s/values-minikube.template"
 OTEL_ENDPOINT="<insert endpoint url from aixcc vault, is pseudo secret>"

@@ -2,7 +2,7 @@ model_list:
   - model_name: openai-gpt-4o
     litellm_params:
       model: openai/gemini-3.1-flash-lite
-      api_key: REDACTED_GEMINI_API_KEY
+      api_key: os.environ/GEMINI_API_KEY
       api_base: https://generativelanguage.googleapis.com/v1beta/openai
       rpm: 4
       max_parallel_requests: 2
@@ -10,7 +10,7 @@ model_list:
   - model_name: openai-gpt-4o-mini
     litellm_params:
       model: openai/gemini-3.1-flash-lite
-      api_key: REDACTED_GEMINI_API_KEY
+      api_key: os.environ/GEMINI_API_KEY
       api_base: https://generativelanguage.googleapis.com/v1beta/openai
       rpm: 4
       max_parallel_requests: 2
@@ -18,7 +18,7 @@ model_list:
   - model_name: openai-gpt-4.1
     litellm_params:
       model: openai/gemini-3.1-flash-lite
-      api_key: REDACTED_GEMINI_API_KEY
+      api_key: os.environ/GEMINI_API_KEY
       api_base: https://generativelanguage.googleapis.com/v1beta/openai
       rpm: 4
       max_parallel_requests: 2
@@ -26,7 +26,7 @@ model_list:
   - model_name: openai-gpt-4.1-mini
     litellm_params:
       model: openai/gemini-3.1-flash-lite
-      api_key: REDACTED_GEMINI_API_KEY
+      api_key: os.environ/GEMINI_API_KEY
       api_base: https://generativelanguage.googleapis.com/v1beta/openai
       rpm: 4
       max_parallel_requests: 2
@@ -34,7 +34,7 @@ model_list:
   - model_name: openai-gpt-4.1-nano
     litellm_params:
       model: openai/gemini-3.1-flash-lite
-      api_key: REDACTED_GEMINI_API_KEY
+      api_key: os.environ/GEMINI_API_KEY
       api_base: https://generativelanguage.googleapis.com/v1beta/openai
       rpm: 4
       max_parallel_requests: 2
@@ -42,7 +42,7 @@ model_list:
   - model_name: openai-o3-mini
     litellm_params:
       model: openai/gemini-3.1-flash-lite
-      api_key: REDACTED_GEMINI_API_KEY
+      api_key: os.environ/GEMINI_API_KEY
       api_base: https://generativelanguage.googleapis.com/v1beta/openai
       rpm: 4
       max_parallel_requests: 2
@@ -50,7 +50,7 @@ model_list:
   - model_name: openai-o1
     litellm_params:
       model: openai/gemini-3.1-flash-lite
-      api_key: REDACTED_GEMINI_API_KEY
+      api_key: os.environ/GEMINI_API_KEY
       api_base: https://generativelanguage.googleapis.com/v1beta/openai
       rpm: 4
       max_parallel_requests: 2
@@ -64,4 +64,4 @@ router_settings:
   cooldown_time: 60
 
 general_settings:
-  master_key: sk-1234
+  master_key: os.environ/LITELLM_MASTER_KEY

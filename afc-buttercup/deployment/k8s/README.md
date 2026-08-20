@@ -46,7 +46,7 @@ This is controlled via the `global.environment` setting in the values.yaml or va
 
    crs:
       api_key_id: 515cc8a0-3019-4c9f-8c1c-72d0b54ae561
-      api_key_token: REDACTED_CRS_TOKEN
+      api_key_token: YOUR_CRS_KEY_TOKEN
       api_key_token_hash: "$argon2id$v=19$m=65536,t=3,p=4$Dg1v6NPGTyXPoOPF4ozD5A$wa/85ttk17bBsIASSwdR/uGz5UKN/bZuu4wu+JIy1iA"
       # api_url: "https://ethereal-logic.tail7e9b4c.ts.net"
       competition_api_key_id: 11111111-1111-1111-1111-111111111111
@@ -143,7 +143,7 @@ For AKS deployment, specify an appropriate storage class that supports ReadWrite
 
 The task server API is secured with authentication:
 - API Key ID: 515cc8a0-3019-4c9f-8c1c-72d0b54ae561
-- API Token: REDACTED_CRS_TOKEN
+- API Token: set via CRS_KEY_TOKEN env var
 
 These credentials are configured in the system by default.
 

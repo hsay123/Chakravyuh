@@ -24,7 +24,7 @@ class TestSettings:
     """Test settings for authentication"""
 
     api_key_id: str = "515cc8a0-3019-4c9f-8c1c-72d0b54ae561"
-    api_token: str = "REDACTED_CRS_TOKEN"
+    api_token: str = os.environ.get("CRS_KEY_TOKEN", "placeholder-set-in-env")
     api_token_hash: str = (
         "$argon2id$v=19$m=65536,t=3,p=4$Dg1v6NPGTyXPoOPF4ozD5A$wa/85ttk17bBsIASSwdR/uGz5UKN/bZuu4wu+JIy1iA"
     )

@@ -20,7 +20,7 @@ fi
 MOCK_API="http://127.0.0.1:31323"
 TASK_SERVER="http://127.0.0.1:8000"
 CRS_KEY_ID="515cc8a0-3019-4c9f-8c1c-72d0b54ae561"
-CRS_TOKEN="REDACTED_CRS_TOKEN"
+CRS_TOKEN="${CRS_KEY_TOKEN:-placeholder-set-in-env}"
 SCRATCH_DIR="$(pwd)/crs_scratch"
 
 TASK_NAME="${1:-lp_delta_01}"

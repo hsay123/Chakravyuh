@@ -137,7 +137,7 @@ services:
               "--host", "0.0.0.0", "--port", "8080",
               "--crs-url", "http://task-server:8000/v1/task/",
               "--crs-key-id", "515cc8a0-3019-4c9f-8c1c-72d0b54ae561",
-              "--crs-token", "REDACTED_CRS_TOKEN",
+              "--crs-token", "${CRS_KEY_TOKEN:-placeholder-set-in-env}",
               "--crs-enabled",
               "--base-url", "http://mock-competition-api:8080"]
     ports:

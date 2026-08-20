@@ -148,7 +148,7 @@ baseUrl: "http://afc-crs-mock-competition-api.default.svc.cluster.local:8080"
 
 The default credentials in development are:
 - API Key ID: `515cc8a0-3019-4c9f-8c1c-72d0b54ae561` 
-- API Token: `REDACTED_CRS_TOKEN`
+- API Token: set via CRS_KEY_TOKEN env var
 
 To update the credentials:
 
