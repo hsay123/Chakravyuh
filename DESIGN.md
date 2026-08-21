@@ -1,4 +1,4 @@
-# DESIGN — TrapNet-CRS
+# DESIGN — Chakravyuh
 
 ## 1. Pipeline State Machine
 
