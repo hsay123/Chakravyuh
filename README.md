@@ -273,15 +273,4 @@ faster than an attacker can exploit them, with a human in the loop at every irre
 
 ---
 
-## 📜 References
-
-1. DARPA AI Cyber Challenge (AIxCC) Finals results, DEF CON 33, August 2025.
-2. Trail of Bits, *Buttercup* — 2nd place AIxCC Finals, open-sourced post-competition.
-   [`github.com/trailofbits/afc-buttercup`](https://github.com/trailofbits/afc-buttercup)
-3. CERT-In national vulnerability-patching blueprint, May 2026.
-4. ThalesGroup, *dd-honeypot* ("DataTrap") —
-   [`github.com/ThalesGroup/dd-honeypot`](https://github.com/ThalesGroup/dd-honeypot)
-
----
-
 *Developed for the Indian Army Terrier Cyber Quest 2026 — AI Kavach Track*
